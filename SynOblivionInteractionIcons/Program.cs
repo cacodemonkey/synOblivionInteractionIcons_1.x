@@ -240,7 +240,7 @@ namespace SynOblivionInteractionIcons
                 else
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font color='ff0000'>¹</font>";
+                    activatorPatch.ActivateTextOverride = "³";
                 }
 
             }
