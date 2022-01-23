@@ -6,21 +6,38 @@ using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
 using Mutagen.Bethesda.FormKeys.SkyrimSE;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Records;
 
 namespace SynOblivionInteractionIcons
 {
     public class Program
     {
+        private static readonly ModKey KeyOblivIcon = ModKey.FromNameAndExtension("oblivioninteractors.esl");
         public static async Task<int> Main(string[] args)
         {
             return await SynthesisPipeline.Instance
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
-                .SetTypicalOpen(GameRelease.SkyrimSE, "OblivionInteractionIcons.esp")
+                .SetTypicalOpen(GameRelease.SkyrimSE, "OblivionInteractionIcons.esp").AddRunnabilityCheck(state =>
+                {
+                    state.LoadOrder.AssertHasMod(KeyOblivIcon, true, "\n\noblivioninteractors.esl missing!\n\n");
+                })
                 .Run(args);
         }
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
+            var OblivionIconInteractorESP = state.LoadOrder.GetIfEnabled(KeyOblivIcon);
+
+            if (OblivionIconInteractorESP.Mod == null) return;
+
+            List<FormKey>? OIIFlora = OblivionIconInteractorESP.Mod.Florae.Select(x => x.FormKey).ToList();
+            List<FormKey>? OIIActivators = OblivionIconInteractorESP.Mod.Activators.Select(x => x.FormKey).ToList();
+
+            List<IFloraGetter>? winningFlora = state.LoadOrder.PriorityOrder.WinningOverrides<IFloraGetter>().Where(x => OIIFlora.Contains(x.FormKey)).ToList();
+            List<IActivatorGetter>? winningActivator = state.LoadOrder.PriorityOrder.WinningOverrides<IActivatorGetter>().Where(x => OIIActivators.Contains(x.FormKey)).ToList();
+
+
             Console.WriteLine("Patching Flora");
             foreach (var flora in state.LoadOrder.PriorityOrder.OnlyEnabled().Flora().WinningOverrides())
             {
@@ -38,19 +55,26 @@ namespace SynOblivionInteractionIcons
                     floraPatch.ActivateTextOverride = "¢";
                 }
                 // Clams
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey))
+                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("CLAM")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "¤";
                 }
                 // Fill
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey))
+                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey) || (flora.ActivateTextOverride != null && flora.ActivateTextOverride.String != null && flora.ActivateTextOverride.String.ToUpper().Contains("FILL BOTTLES")))
+                {
+                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
+                    floraPatch.ActivateTextOverride = "µ";
+                }
+                // Cask or Barrel
+                else if (flora.Name.String != null
+                    && (flora.Name.String.ToUpper().Contains("BARREL") || flora.Name.String.ToUpper().Contains("CASK")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "µ";
                 }
                 // Coin Pouch
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey))
+                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey) || flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMCoinPouchDown.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("COIN PURSE")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "¼";
@@ -63,11 +87,26 @@ namespace SynOblivionInteractionIcons
                 }
             }
 
+            foreach  (var flora in OblivionIconInteractorESP.Mod.Florae)
+            {
+                var winningOverride = winningFlora.Where(x => x.FormKey == flora.FormKey).First();
+                var PatchFlora = state.PatchMod.Florae.GetOrAddAsOverride(winningOverride);
+
+                if (flora.ActivateTextOverride == null) continue;
+                PatchFlora.ActivateTextOverride = flora.ActivateTextOverride.String;
+            }
+            
+
             Console.WriteLine("Patching Activators");
             foreach (var activator in state.LoadOrder.PriorityOrder.OnlyEnabled().Activator().WinningOverrides())
             {
+                //Blacklisting superfluos entries
+                if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.ActivateTextOverride == null && (activator.EditorID.ToString().ToUpper().Contains("TRIGGER") || activator.EditorID.ToString().ToUpper().Contains("FX")))
+                {
+                    continue;
+                }
                 // Search
-                if(activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SEARCH")) 
+                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SEARCH")) 
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "¹"; 
@@ -101,14 +140,8 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "×";
                 }
-                // Button
-                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("BUTTON"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "§";
-                }
-                // Push or Examine
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("EXAMINE") || activator.ActivateTextOverride.String.ToUpper().Equals("PUSH")))
+                // Button, Examine , Push, Investigate
+                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("BUTTON") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("EXAMINE") || activator.ActivateTextOverride.String.ToUpper().Equals("PUSH") || activator.ActivateTextOverride.String.ToUpper().Equals("INVESTIGATE")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "§";
@@ -237,12 +270,33 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font color='ff0000'>¹</font>";
                 }
+                // Sleep
+                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("BED") || activator.Name.String.ToUpper().Contains("HAMMOCK") || activator.Name.String.ToUpper().Contains("COFFIN")))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "ª";
+                }
+                // Civil War Map
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && (activator.EditorID.ToString().ToUpper().Contains("CWMap")))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "§";
+                }
                 else
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "³";
                 }
+                
+            }
 
+            foreach (var activator in OblivionIconInteractorESP.Mod.Activators)
+            {
+                var winningOverride = winningActivator.Where(x => x.FormKey == activator.FormKey).First();
+                var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(winningOverride);
+
+                if (activator.ActivateTextOverride == null) continue;
+                activatorPatch.ActivateTextOverride = activator.ActivateTextOverride.String;
             }
         }
     }
