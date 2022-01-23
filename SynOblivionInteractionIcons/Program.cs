@@ -42,7 +42,7 @@ namespace SynOblivionInteractionIcons
             foreach (var flora in state.LoadOrder.PriorityOrder.OnlyEnabled().Flora().WinningOverrides())
             {
                 // Mushrooms
-                if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMIngredientMushroomUp.FormKey))
+                if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientMushroomUp.FormKey))
                 {
 
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
@@ -55,13 +55,13 @@ namespace SynOblivionInteractionIcons
                     floraPatch.ActivateTextOverride = "¢";
                 }
                 // Clams
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("CLAM")))
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("CLAM")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "¤";
                 }
                 // Fill
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey) || (flora.ActivateTextOverride != null && flora.ActivateTextOverride.String != null && flora.ActivateTextOverride.String.ToUpper().Contains("FILL BOTTLES")))
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey) || (flora.ActivateTextOverride != null && flora.ActivateTextOverride.String != null && flora.ActivateTextOverride.String.ToUpper().Contains("FILL BOTTLES")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "µ";
@@ -74,7 +74,7 @@ namespace SynOblivionInteractionIcons
                     floraPatch.ActivateTextOverride = "µ";
                 }
                 // Coin Pouch
-                else if (flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey) || flora.HarvestSound.Equals(Skyrim.SoundDescriptor.ITMCoinPouchDown.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("COIN PURSE")))
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey) || flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchDown.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("COIN PURSE")))
                 {
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "¼";
@@ -223,6 +223,11 @@ namespace SynOblivionInteractionIcons
                     activatorPatch.ActivateTextOverride = "º";
                 }
                 // Open
+                else if (activator.Name!= null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("CHEST") && activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "¹";
+                }
                 else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
