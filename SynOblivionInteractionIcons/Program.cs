@@ -287,6 +287,36 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">F</font>";
                 }
+				// EVG Ladder
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("LADDER"))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">d</font>";
+                }
+				 // EVG Squeeze
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("SQUEEZE"))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">e</font>";
+                }
+				// CC Fishing
+                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("FISHING SUPPLIES")))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">I</font>";
+                }
+				// Torch
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("TORCHSCONCE"))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">i</font>";
+                }
+				// dragonclaw
+                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("KEYHOLE")))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">j</font>";
+                }
                 else
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
