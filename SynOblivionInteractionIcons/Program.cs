@@ -44,7 +44,6 @@ namespace SynOblivionInteractionIcons
                 // Mushrooms
                 if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientMushroomUp.FormKey))
                 {
-
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">A</font>";
                 }
@@ -79,6 +78,12 @@ namespace SynOblivionInteractionIcons
                     var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
                     floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>";
                 }
+                // Catch, Scavenge
+                else if (flora.ActivateTextOverride != null && flora.ActivateTextOverride.String != null && (flora.ActivateTextOverride.String.ToUpper().Equals("CATCH") || flora.ActivateTextOverride.String.ToUpper().Equals("SCAVENGE")))
+                {
+                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
+                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>";
+                }
                 // Other Flora
                 else
                 {
@@ -105,11 +110,16 @@ namespace SynOblivionInteractionIcons
                 {
                     continue;
                 }
-                // Search
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SEARCH")) 
+                // Chest | Search
+                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Equals("CHEST") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SEARCH")) 
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">V</font>"; 
+                }
+		else if (activator.Name!= null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("CHEST") && activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
+                {
+                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">V</font>";
                 }
                 // Grab & Touch
                 else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("GRAB") || activator.ActivateTextOverride.String.ToUpper().Equals("TOUCH"))) 
@@ -140,14 +150,14 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">G</font>";
                 }
-                // Button, Examine , Push, Investigate
-                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("BUTTON") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("EXAMINE") || activator.ActivateTextOverride.String.ToUpper().Equals("PUSH") || activator.ActivateTextOverride.String.ToUpper().Equals("INVESTIGATE")))
+                // Button | Press, Examine, Push, Investigate
+                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("BUTTON") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("PRESS") || activator.ActivateTextOverride.String.ToUpper().Equals("EXAMINE") || activator.ActivateTextOverride.String.ToUpper().Equals("PUSH") || activator.ActivateTextOverride.String.ToUpper().Equals("INVESTIGATE")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">F</font>";
                 }
-                // Write
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("WRITE"))
+                // Business Ledger | Write
+                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("LEDGER") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("WRITE"))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">H</font>";
@@ -175,13 +185,13 @@ namespace SynOblivionInteractionIcons
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">J</font>";
                 }
                 // Eat
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("DRINK"))
+                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("EAT"))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">K</font>";
                 }
-                // Drop or Place
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("DROP") || activator.ActivateTextOverride.String.ToUpper().Equals("PLACE")))
+                // Drop, Place, Exchange
+                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("DROP") || activator.ActivateTextOverride.String.ToUpper().Equals("PLACE") || activator.ActivateTextOverride.String.ToUpper().Equals("EXCHANGE")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">N</font>";
@@ -204,14 +214,14 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">Q</font>";
                 }
-                // Take
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("TAKE"))
+                // Take or Catch
+                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("TAKE") || activator.ActivateTextOverride.String.ToUpper().Equals("CATCH")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>";
                 }
-                // Talk
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("TALK"))
+                // Talk, Speak
+                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("TALK") || activator.ActivateTextOverride.String.ToUpper().Equals("SPEAK")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">T</font>";
@@ -222,12 +232,7 @@ namespace SynOblivionInteractionIcons
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">U</font>";
                 }
-                // Open
-                else if (activator.Name!= null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("CHEST") && activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">V</font>";
-                }
+                // Open (Door)
                 else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
@@ -282,13 +287,13 @@ namespace SynOblivionInteractionIcons
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">a</font>";
                 }
                 // Civil War Map
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && (activator.EditorID.ToString().ToUpper().Contains("CWMap")))
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && (activator.EditorID.ToString().ToUpper().Contains("CWMAP")))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">F</font>";
                 }
-				// EVG Ladder
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("LADDER"))
+				// EVG Ladder | Float
+                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("LADDER") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("FLOAT"))
                 {
                     var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
                     activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">d</font>";
