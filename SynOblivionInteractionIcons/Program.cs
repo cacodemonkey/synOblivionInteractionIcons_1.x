@@ -9,6 +9,30 @@ using Mutagen.Bethesda.FormKeys.SkyrimSE;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Records;
 
+public static class StringExtensions
+{
+    public static bool ToUpperContains(this string? source, string value)
+    {
+        return source != null && source.ToUpper().Contains(value.ToUpper());
+    }
+
+    public static bool ToUpperContainsAny(this string? source, params string[] stringValues)
+    {
+        return source != null && stringValues.Any(s => source.ToUpper().Contains(s.ToUpper()));
+    }
+
+    public static bool ToUpperEquals(this string? source, string value)
+    {
+        return source != null && source.ToUpper().Equals(value.ToUpper());
+    }
+
+    public static bool ToUpperEqualsAny(this string? source, params string[] stringValues)
+    {
+        return source != null && stringValues.Contains(source.ToUpper());
+    }
+}
+
+
 namespace SynOblivionInteractionIcons
 {
     public class Program
@@ -37,57 +61,60 @@ namespace SynOblivionInteractionIcons
             List<IFloraGetter>? winningFlora = state.LoadOrder.PriorityOrder.WinningOverrides<IFloraGetter>().Where(x => OIIFlora.Contains(x.FormKey)).ToList();
             List<IActivatorGetter>? winningActivator = state.LoadOrder.PriorityOrder.WinningOverrides<IActivatorGetter>().Where(x => OIIActivators.Contains(x.FormKey)).ToList();
 
-
             Console.WriteLine("Patching Flora");
             foreach (var flora in state.LoadOrder.PriorityOrder.OnlyEnabled().Flora().WinningOverrides())
             {
-                // Mushrooms
-                if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientMushroomUp.FormKey))
-                {
+                string iconCharacter = "Q"; // Default
+                string? iconColor = null;
 
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">A</font>";
-                }
-                else if (flora.Name.String != null
-                         && (flora.Name.String.ToUpper().Contains("SPORE") || flora.Name.String.ToUpper().Contains("CAP") || flora.Name.String.ToUpper().Contains("CROWN") || flora.Name.String.ToUpper().Contains("SHROOM")))
+                var name = flora.Name != null ? flora.Name.String : null;
+                var activateTextOverride = flora.ActivateTextOverride != null ? flora.ActivateTextOverride.String : null;
+
+                // Mushrooms
+                if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientMushroomUp.FormKey)
+                    || name.ToUpperContainsAny("SPORE", "CAP", "CROWN", "SHROOM"))
                 {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">A</font>";
+                    iconCharacter = "A";
                 }
                 // Clams
-                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("CLAM")))
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMIngredientClamUp.FormKey)
+                        || name.ToUpperContains("CLAM"))
                 {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">b</Font>";
+                    iconCharacter = "b";
                 }
-                // Fill
-                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey) || (flora.ActivateTextOverride != null && flora.ActivateTextOverride.String != null && flora.ActivateTextOverride.String.ToUpper().Contains("FILL BOTTLES")))
+                // Fill | Cask or Barrel (Fill)
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMPotionUpSD.FormKey)
+                        || activateTextOverride.ToUpperContains("FILL BOTTLES")
+                        || name.ToUpperContainsAny("BARREL", "CASK"))
                 {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">L</font>";
-                }
-                // Cask or Barrel
-                else if (flora.Name.String != null
-                    && (flora.Name.String.ToUpper().Contains("BARREL") || flora.Name.String.ToUpper().Contains("CASK")))
-                {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">L</font>";
+                    iconCharacter = "L";
                 }
                 // Coin Pouch
-                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey) || flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchDown.FormKey) || (flora.Name.String != null && flora.Name.String.ToUpper().Contains("COIN PURSE")))
+                else if (flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchUp.FormKey)
+                        || flora.HarvestSound.FormKey.Equals(Skyrim.SoundDescriptor.ITMCoinPouchDown.FormKey)
+                        || name.ToUpperContains("COIN PURSE"))
                 {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>";
+                    iconCharacter = "S";
+                }
+                // Catch, Scavenge
+                else if (activateTextOverride.ToUpperEqualsAny("CATCH", "SCAVENGE"))
+                {
+                    iconCharacter = "S";
                 }
                 // Other Flora
                 else
                 {
-                    var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
-                    floraPatch.ActivateTextOverride = "<font face=\"Iconographia\">Q</font>";
+                    iconCharacter = "Q";
                 }
+
+                var floraPatch = state.PatchMod.Florae.GetOrAddAsOverride(flora);
+
+                string newActivateTextOverride = "<font face=\"Iconographia\">" + iconCharacter + "</font>";
+                floraPatch.ActivateTextOverride = iconColor == null ? newActivateTextOverride
+                                                                    : "<font color='" + iconColor + "'>" + newActivateTextOverride + "</font>";
             }
 
-            foreach  (var flora in OblivionIconInteractorESP.Mod.Florae)
+            foreach (var flora in OblivionIconInteractorESP.Mod.Florae)
             {
                 var winningOverride = winningFlora.Where(x => x.FormKey == flora.FormKey).First();
                 var PatchFlora = state.PatchMod.Florae.GetOrAddAsOverride(winningOverride);
@@ -95,234 +122,202 @@ namespace SynOblivionInteractionIcons
                 if (flora.ActivateTextOverride == null) continue;
                 PatchFlora.ActivateTextOverride = flora.ActivateTextOverride.String;
             }
-            
+
 
             Console.WriteLine("Patching Activators");
             foreach (var activator in state.LoadOrder.PriorityOrder.OnlyEnabled().Activator().WinningOverrides())
             {
+                string iconCharacter = "W"; // Default
+                string? iconColor = null;
+
+                var name = activator.Name != null ? activator.Name.String : null;
+                var editorId = activator.EditorID != null ? activator.EditorID.ToString() : null;
+                var activateTextOverride = activator.ActivateTextOverride != null ? activator.ActivateTextOverride.String : null;
+
                 //Blacklisting superfluos entries
-                if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.ActivateTextOverride == null && (activator.EditorID.ToString().ToUpper().Contains("TRIGGER") || activator.EditorID.ToString().ToUpper().Contains("FX")))
+                if (activator.ActivateTextOverride == null && editorId.ToUpperContainsAny("TRIGGER", "FX"))
                 {
                     continue;
                 }
-                // Search
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SEARCH")) 
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">V</font>"; 
-                }
-                // Grab & Touch
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("GRAB") || activator.ActivateTextOverride.String.ToUpper().Equals("TOUCH"))) 
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>"; 
-                }
-                // Levers
-                else if (activator.Keywords != null && activator.Keywords.Contains(Skyrim.Keyword.ActivatorLever.FormKey) || (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("LEVER"))) 
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">D</font>"; 
-                }
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("PULLBAR"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">D</font>";
-                }
-                // Chains
-                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("CHAIN"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">E</font>";
-                }
-                // Mine
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("MINE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">G</font>";
-                }
-                // Button, Examine , Push, Investigate
-                else if (activator.Name != null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("BUTTON") || activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("EXAMINE") || activator.ActivateTextOverride.String.ToUpper().Equals("PUSH") || activator.ActivateTextOverride.String.ToUpper().Equals("INVESTIGATE")))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">F</font>";
-                }
-                // Write
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("WRITE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">H</font>";
-                }
-                // Pray
-                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("SHRINE") || activator.Name.String.ToUpper().Contains("ALTAR")))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">C</font>";
-                }
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("DLC2STANDINGSTONE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">C</font>";
-                }
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("PRAY") || activator.ActivateTextOverride.String.ToUpper().Equals("WORSHIP")))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">C</font>";
-                }
-                // Drink
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("DRINK"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">J</font>";
-                }
-                // Eat
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("DRINK"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">K</font>";
-                }
-                // Drop or Place
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && (activator.ActivateTextOverride.String.ToUpper().Equals("DROP") || activator.ActivateTextOverride.String.ToUpper().Equals("PLACE")))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">N</font>";
-                }
-                // Pick up
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("PICK UP"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">O</font>";
-                }
-                // Read
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("READ"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">P</font>";
-                }
-                // Harvest
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("HARVEST"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">Q</font>";
-                }
-                // Take
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("TAKE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">S</font>";
-                }
-                // Talk
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("TALK"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">T</font>";
-                }
-                // Sit
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SIT"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">U</font>";
-                }
-                // Open
-                else if (activator.Name!= null && activator.Name.String != null && activator.Name.String.ToUpper().Contains("CHEST") && activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">V</font>";
-                }
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("OPEN"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">X</font>";
-                }
-                // Activate
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("ACTIVATE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">Y</font>";
-                }
-                // Unlock
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("UNLOCK"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">Z</font>";
-                }
-                // Sleep
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("SLEEP"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">a</font>";
-                }
                 // Steal
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("STEAL"))
+                else if (activateTextOverride.ToUpperEquals("STEAL"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font color='ff0000'><font face=\"Iconographia\">S</font></font>";
+                    iconColor = "ff0000";
+                    iconCharacter = "S";
                 }
                 // Pickpocket
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("PICKPOCKET"))
+                else if (activateTextOverride.ToUpperEquals("PICKPOCKET"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font color='ff0000'><font face=\"Iconographia\">b</Font></font>";
-                }
-                // CLOSE
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("CLOSE"))
-                {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font color='dddddd'><font face=\"Iconographia\">X</font></font>";
+                    iconColor = "ff0000";
+                    iconCharacter = "b";
                 }
                 // Steal From
-                else if (activator.ActivateTextOverride != null && activator.ActivateTextOverride.String != null && activator.ActivateTextOverride.String.ToUpper().Equals("STEAL FROM"))
+                else if (activateTextOverride.ToUpperEquals("STEAL FROM"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font color='ff0000'><font face=\"Iconographia\">V</font></font>";
+                    iconColor = "ff0000";
+                    iconCharacter = "V";
+                }
+                // Close
+                else if (activateTextOverride.ToUpperEquals("CLOSE"))
+                {
+                    iconColor = "dddddd";
+                    iconCharacter = "X";
+                }
+                // Chest | Search | Open Chest
+                else if (name.ToUpperEquals("CHEST")
+                        || activateTextOverride.ToUpperEquals("SEARCH")
+                        || name.ToUpperContains("CHEST") && activateTextOverride.ToUpperEquals("OPEN"))
+                {
+                    iconCharacter = "V";
+                }
+                // Grab & Touch
+                else if (activateTextOverride.ToUpperEqualsAny("GRAB", "TOUCH"))
+                {
+                    iconCharacter = "S";
+                }
+                // Levers
+                else if (activator.Keywords != null && activator.Keywords.Contains(Skyrim.Keyword.ActivatorLever.FormKey)
+                        || name.ToUpperContains("LEVER")
+                        || editorId.ToUpperContains("PULLBAR"))
+                {
+                    iconCharacter = "D";
+                }
+                // Chains
+                else if (name.ToUpperContains("CHAIN"))
+                {
+                    iconCharacter = "E";
+                }
+                // Mine
+                else if (activateTextOverride.ToUpperEquals("MINE"))
+                {
+                    iconCharacter = "G";
+                }
+                // Button | Press, Examine, Push, Investigate
+                else if (name.ToUpperContains("BUTTON")
+                        || activateTextOverride.ToUpperEqualsAny("PRESS", "EXAMINE", "PUSH", "INVESTIGATE"))
+                {
+                    iconCharacter = "F";
+                }
+                // Business Ledger | Write
+                else if (name.ToUpperContains("LEDGER")
+                        || activateTextOverride.ToUpperEquals("WRITE"))
+                {
+                    iconCharacter = "H";
+                }
+                // Pray
+                else if (name.ToUpperContainsAny("SHRINE", "ALTAR")
+                        || editorId.ToUpperContains("DLC2STANDINGSTONE")
+                        || activateTextOverride.ToUpperEqualsAny("PRAY", "WORSHIP"))
+                {
+                    iconCharacter = "C";
+                }
+                // Drink
+                else if (activateTextOverride.ToUpperEquals("DRINK"))
+                {
+                    iconCharacter = "J";
+                }
+                // Eat
+                else if (activateTextOverride.ToUpperEquals("EAT"))
+                {
+                    iconCharacter = "K";
+                }
+                // Drop, Place, Exchange
+                else if (activateTextOverride.ToUpperEqualsAny("DROP", "PLACE", "EXCHANGE"))
+                {
+                    iconCharacter = "N";
+                }
+                // Pick up
+                else if (activateTextOverride.ToUpperEquals("PICK UP"))
+                {
+                    iconCharacter = "O";
+                }
+                // Read
+                else if (activateTextOverride.ToUpperEquals("READ"))
+                {
+                    iconCharacter = "P";
+                }
+                // Harvest
+                else if (activateTextOverride.ToUpperEquals("HARVEST"))
+                {
+                    iconCharacter = "Q";
+                }
+                // Take or Catch
+                else if (activateTextOverride.ToUpperEqualsAny("TAKE", "CATCH"))
+                {
+                    iconCharacter = "S";
+                }
+                // Talk, Speak
+                else if (activateTextOverride.ToUpperEqualsAny("TALK", "SPEAK"))
+                {
+                    iconCharacter = "T";
+                }
+                // Sit
+                else if (activateTextOverride.ToUpperEquals("SIT"))
+                {
+                    iconCharacter = "U";
+                }
+                // Open (Door)
+                else if (activateTextOverride.ToUpperEquals("OPEN"))
+                {
+                    iconCharacter = "X";
+                }
+                // Activate
+                else if (activateTextOverride.ToUpperEquals("ACTIVATE"))
+                {
+                    iconCharacter = "Y";
+                }
+                // Unlock
+                else if (activateTextOverride.ToUpperEquals("UNLOCK"))
+                {
+                    iconCharacter = "Z";
                 }
                 // Sleep
-                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("BED") || activator.Name.String.ToUpper().Contains("HAMMOCK") || activator.Name.String.ToUpper().Contains("COFFIN")))
+                else if (activateTextOverride.ToUpperEquals("SLEEP")
+                        || name.ToUpperContainsAny("BED", "HAMMOCK", "COFFIN"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">a</font>";
+                    iconCharacter = "a";
                 }
-                // Civil War Map
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && (activator.EditorID.ToString().ToUpper().Contains("CWMap")))
+                // Torch
+                else if (editorId.ToUpperContains("TORCHSCONCE"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">F</font>";
+                    iconCharacter = "i";
                 }
-				// EVG Ladder
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("LADDER"))
+                // Dragon Claw
+                else if (name.ToUpperContains("KEYHOLE"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">d</font>";
+                    iconCharacter = "j";
                 }
-				 // EVG Squeeze
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("SQUEEZE"))
+                // Civil War Map & Map Marker (Flags)
+                else if (editorId.ToUpperContains("CWMAP"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">e</font>";
+                    iconCharacter = "F";
                 }
-				// CC Fishing
-                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("FISHING SUPPLIES")))
+                // EVG Ladder | Float, Climb
+                else if (editorId.ToUpperContains("LADDER")
+                        || activateTextOverride.ToUpperEqualsAny("FLOAT", "CLIMB"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">I</font>";
+                    iconCharacter = "d";
                 }
-				// Torch
-                else if (activator.EditorID != null && activator.EditorID.ToString() != null && activator.EditorID.ToString().ToUpper().Contains("TORCHSCONCE"))
+                // EVG Squeeze
+                else if (editorId.ToUpperContains("SQUEEZE"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">i</font>";
+                    iconCharacter = "e";
                 }
-				// dragonclaw
-                else if (activator.Name != null && activator.Name.String != null && (activator.Name.String.ToUpper().Contains("KEYHOLE")))
+                // CC Fishing
+                else if (name.ToUpperContains("FISHING SUPPLIES"))
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">j</font>";
+                    iconCharacter = "I";
                 }
                 else
                 {
-                    var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
-                    activatorPatch.ActivateTextOverride = "<font face=\"Iconographia\">W</font>";
+                    iconCharacter = "W";
                 }
-                
+
+                var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
+
+                string newActivateTextOverride = "<font face=\"Iconographia\">" + iconCharacter + "</font>";
+                activatorPatch.ActivateTextOverride = iconColor == null ? newActivateTextOverride
+                                                                        : "<font color='" + iconColor + "'>" + newActivateTextOverride + "</font>";
             }
 
             foreach (var activator in OblivionIconInteractorESP.Mod.Activators)
