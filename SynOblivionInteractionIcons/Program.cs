@@ -313,6 +313,15 @@ namespace SynOblivionInteractionIcons
                     iconCharacter = "W";
                 }
 
+                // Just use Skymoji EVG if exists instead of using the logic above ^
+                if (activator.EditorID != null &&
+                    activator.EditorID.StartsWith("EVGSelector") &&
+                    activateTextOverride.ToUpperContains("ICONOGRAPHIA"))
+                {
+                    state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    continue;
+                }
+
                 var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
 
                 string newActivateTextOverride = "<font face=\"Iconographia\">" + iconCharacter + "</font>";
