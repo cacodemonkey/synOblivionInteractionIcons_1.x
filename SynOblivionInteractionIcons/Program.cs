@@ -44,7 +44,7 @@ namespace SynOblivionInteractionIcons
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
                 .SetTypicalOpen(GameRelease.SkyrimSE, "OblivionInteractionIcons.esp").AddRunnabilityCheck(state =>
                 {
-                    state.LoadOrder.AssertHasMod(KeyOblivIcon, true, "\n\nskymojibase.esl missing!\n\n");
+                    state.LoadOrder.AssertListsMod(KeyOblivIcon, "\n\nskymojibase.esl missing!\n\n");
                 })
                 .Run(args);
         }
