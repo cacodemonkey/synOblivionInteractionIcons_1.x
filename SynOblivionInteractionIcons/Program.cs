@@ -44,7 +44,7 @@ namespace SynOblivionInteractionIcons
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
                 .SetTypicalOpen(GameRelease.SkyrimSE, "OblivionInteractionIcons.esp").AddRunnabilityCheck(state =>
                 {
-                    state.LoadOrder.AssertHasMod(KeyOblivIcon, true, "\n\nskymojibase.esl missing!\n\n");
+                    state.LoadOrder.AssertListsMod(KeyOblivIcon, "\n\nskymojibase.esl missing!\n\n");
                 })
                 .Run(args);
         }
@@ -311,6 +311,15 @@ namespace SynOblivionInteractionIcons
                 else
                 {
                     iconCharacter = "W";
+                }
+
+                // Just use Skymoji EVG if exists instead of using the logic above ^
+                if (activator.EditorID != null &&
+                    activator.EditorID.StartsWith("EVGSelector") &&
+                    activateTextOverride.ToUpperContains("ICONOGRAPHIA"))
+                {
+                    state.PatchMod.Activators.GetOrAddAsOverride(activator);
+                    continue;
                 }
 
                 var activatorPatch = state.PatchMod.Activators.GetOrAddAsOverride(activator);
